@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="menu.css" />
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+<script src="keystore.js"></script>
+<title> Shopping Cart </title>
+</head>
+
+<body>
+<script>
+
+    var listData = [];
+    var selectedId;
+    var buyClick = function(){
+        alert('Item added to cart');
+    }
+    var getCallBack = function(data) {
+        listData.push(data);
+        console.log('Got data for key ' + data.key + ' value = ' + data.value);
+        var listHtml = "<li width='50%'> " + "<img width='50px' height='50px' src='images/" + selectedId + ".png'></img> <h4> " + data.key + " </h4> " +
+                        "<div> Price: $ "+ data.value + ".00 </div> " +
+                        " <div style='float:right'> <button class='buy-button' onclick='buyClick()'>Buy</button> </div>" +
+                        " </li>";
+        $('#detailList').append(listHtml);
+        $('#detailList').listview('refresh');
+    }
+
+
+var handleListClick = function(id) {
+    listData = [];
+    selectedId = id;
+    $('#detailList').empty();
+    for(var i=0; i < 10; i++){
+        var key = id + '-' + i;
+        invokeKeyStore(key,null,getValue,getCallBack);
+    }
+    
+    
+}
+
+
+
+</script>
+
+<div data-role="page" id="pageone">
+  <div data-role="main" class="ui-content">
+   <div style = "float:left">
+ 
+  <img src="images\shoppingcartimage.png"  style="width:100px;height:100px" >
+  </div>
+  <h1 class="shopping-heading">Welcome to the Random Store</h1>
+  </br>
+  <div  style="clear: both">
+  </div>
+  
+    <h4>Here is the Shopping List. Please click on the item to view price</h4>
+	 </br>
+    <ol data-role="listview">
+        <li width="100%" onclick="handleListClick(this.id)" id="Toshiba" style="cursor:pointer;"><a href="#">Toshiba</a></li>      
+        <li width="100%" onclick="handleListClick(this.id)" id="iPhone"  style="cursor:pointer;"><a href="#">iPhone</a></li>
+        <li width="100%" onclick="handleListClick(this.id)" id="Android"  style="cursor:pointer;"><a href="#">Android</a></li>
+    </ol>
+    
+    <h4>Details</h4>
+	 </br>
+    <ul id="detailList" data-role="listview" data-filter="true" class="ui-listview ui-listview-inset ui-corner-all ui-shadow">
+    </ul>
+    
+      </div>
+</div> 
+ 
+</body>
+</html>

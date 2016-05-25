@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<link rel="stylesheet" type="text/css" href="menu.css" />
+<title> Keystore Adminstration </title>
+</head>
+<body>
+<div style="float:left"> 
+<img width='50px' height='50px' src="images/adminconsole.png">
+</div>
+<h1 class="admin-heading"> Adminstration Console </h1>
+<div style="clear:both"></div>
+
+
+<div  ng-app="myApp" ng-controller="nodeStatusCtrl"> 
+<button class="buy-button" ng-click="refreshNodeData()">Refresh </button>
+<h4> Node details </h4>
+<table width="50%">
+  <tr>
+    <th>Node Name</th>
+    <th>Status </th>
+    <th>Key Count </th>
+  </tr>
+  <tr ng-repeat="x in nodes">
+    <td>{{ x.nodeName }}</td>
+    <td style="background-color:{{getBgColor(x.state)}}" >{{ x.state }}</td>
+    <td align="center">{{ x.keyCount }}</td>
+  </tr>
+</table>
+    
+
+<h4> Manage Nodes </h4>
+<label for="nodeName">Node Name </label>
+<input id="nodeName" type="text" ng-model="node.nodeName"/>
+<label for="hostName">Host Name </label>
+<input id ="hostName" type ="text" ng-model="node.hostName"/>
+<label for="KeyPort">Key Port </label>
+<input id = "keyPort" type = "number" ng-model="node.keyPort"/>
+<label for="healthPort">Health Port </label>
+<input id = "healthPort" type = "number" ng-model="node.healthPort"/>
+<br></br>
+<button class="admin-button" ng-click="addNode()">Add Node </button>
+<button class="admin-button" ng-click="removeNode()">Remove Node </button>
+
+<br></br>
+<span> Moved keys </span>
+<strong ng-bind="keyMoveCount"></strong>
+
+<!--<h2> Remove Node </h2>
+
+<label for="remnodeName">Node Name </label>
+<input id="remnodeName" type="text" ng-model="node.remnodeName"/>
+
+<label for="remnodeHostName">Host Name </label>
+<input id="remnodeHostName" type="text" ng-model="node.remnodeHostName"/>
+
+<label for="remnodeKeyPort">Key Port </label>
+<input id="remnodeKeyPort" type="number" ng-model="node.remnodeKeyPort"/>
+
+<label for="remnodeHealthPort">Health Port </label>
+<input id="remnodeHealthPort" type="number" ng-model="node.remnodeHealthPort"/>
+
+<br></br>
+
+<span>Status: </span>
+<strong ng-bind="status"></strong>
+-->
+</div>
+
+<script>
+var app = angular.module('myApp', []);
+app.controller('nodeStatusCtrl', function($scope, $http) {
+    var masterHost = '52.36.149.253';
+    $scope.addNode = function(){
+         var data = {};
+         data.nodeName = $scope.node.nodeName;
+         data.hostName = $scope.node.hostName;
+         data.keyPort = $scope.node.keyPort;
+         data.healthPort = $scope.node.healthPort;
+         
+         console.log("data = " + JSON.stringify(data));
+         $.post("http://" + masterHost + ":9011/context/addnode",JSON.stringify(data)).then(function(targetNodeData){
+             var newNodeUrl = "http://" + data.hostName + ":" + data.healthPort + "/context/startbulktransfer";
+             console.log(JSON.stringify(targetNodeData));
+             $.post(newNodeUrl,JSON.stringify(targetNodeData)).then(function (keyData) {
+                $scope.keyMoveCount = keyData.keyCount;  
+                $scope.refreshNodeData();
+             });
+         });
+    	$scope.node.nodeName = '';
+		$scope.node.hostName ='';
+		$scope.node.keyPort ='';
+		$scope.node.healthPort ='';
+
+
+    }
+    
+    $scope.removeNode = function(){
+         var data = {};
+         data.nodeName = $scope.node.nodeName;
+         data.hostName = $scope.node.hostName;
+         data.keyPort = $scope.node.keyPort;
+         data.healthPort = $scope.node.healthPort;
+         
+         console.log("data = " + JSON.stringify(data));
+         $.post("http://" + masterHost + ":9011/context/removenode",JSON.stringify(data)).then(function(targetNodeData) {
+            $scope.status = 'Node removed. Moving keys to ' + targetNodeData.nodeName + ' ...';
+            
+            $scope.refreshNodeData();
+            
+            console.log(JSON.stringify(targetNodeData));
+            var newNodeUrl = "http://" + targetNodeData.hostName + ":" + targetNodeData.healthPort + "/context/startbulkremovetransfer";
+            $.post(newNodeUrl,JSON.stringify(data)).then(function (keyData) {
+                $scope.keyMoveCount = keyData.keyCount;  
+                $scope.node.nodeName = '';
+		$scope.node.hostName ='';
+		$scope.node.keyPort ='';
+		$scope.node.healthPort ='';
+
+             });
+         }
+         
+         );
+         
+         
+    }
+    
+    $scope.refreshNodeData = function() {
+         $http.get("http://" + masterHost + ":9011/context/nodestate/")
+    .then(function (response) {
+       $scope.nodes = response.data.nodes;
+       });
+       
+     $scope.getBgColor = function(state) {
+         if(state == 'ACTIVE') 
+           return 'green';
+         else if (state == 'INITIALIZED')
+           return 'yellow';
+         else  
+           return 'red';
+     }
+    }
+});
+</script>
+
+    
+
+
+
+               
+</body>
+</html>
